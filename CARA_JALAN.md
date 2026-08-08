@@ -148,7 +148,7 @@ python manage.py runserver
 ## 🌐 CARA 3: Deploy ke PythonAnywhere & Push GitHub
 
 ### 🐙 A. Push ke GitHub
-```bash
+``` bash
 # 1. Inisialisasi git (jika belum)
 git init
 
