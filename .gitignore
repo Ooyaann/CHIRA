@@ -1,0 +1,38 @@
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Django files
+*.log
+local_settings.py
+db.sqlite3-journal
+
+# Media / Uploaded test files (keep directory structure with .gitkeep)
+web/media/detections/*
+!web/media/detections/.gitkeep
+web/media/temp/*
+!web/media/temp/.gitkeep
+web/staticfiles/
+
+# Logs & temp test scripts
+web/chira.log
+web/test_*.py
+
+# Large base weight temporary downloads (only best.pt in models/ is needed)
+yolo*.pt
+
+# IDE / System
+.env
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.tmp

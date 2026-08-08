@@ -1,0 +1,114 @@
+{% extends 'detection/base.html' %}
+{% block title %}Upload - CHIRA{% endblock %}
+{% block page_title %}Upload Manual{% endblock %}
+{% block page_subtitle %}Unggah foto ayam untuk analisis AI{% endblock %}
+
+{% block content %}
+<div class="content-grid equal fade-in">
+    <!-- Upload Form -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-cloud-upload-alt"></i> Upload Gambar</div>
+        </div>
+        <div class="card-body">
+            {% if error %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i>
+                <div>{{ error }}</div>
+            </div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" id="uploadForm">
+                {% csrf_token %}
+                <div class="upload-zone" id="dropZone" onclick="document.getElementById('imageInput').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h3>Drag & Drop atau Klik untuk Upload</h3>
+                    <p>Format: JPG, PNG, JPEG (Maks. 10MB)</p>
+                    <input type="file" name="image" id="imageInput" accept="image/*" style="display:none" required>
+                </div>
+
+                <div id="previewArea" style="margin-top:1rem;display:none">
+                    <img id="previewImg" style="max-width:100%;border-radius:8px;border:1px solid var(--border)">
+                </div>
+
+                <div style="margin-top:1.25rem;display:flex;gap:0.75rem">
+                    <button type="submit" class="btn btn-primary btn-lg" style="flex:1">
+                        <i class="fas fa-microscope"></i> Analisis dengan AI
+                    </button>
+                    <a href="{% url 'detection:home' %}" class="btn btn-outline btn-lg">Batal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title"><i class="fas fa-lightbulb"></i> Tips Pengambilan Foto</div>
+        </div>
+        <div class="card-body">
+            <div class="info-grid">
+                <div class="info-box">
+                    <h4><i class="fas fa-sun"></i> Pencahayaan</h4>
+                    <p>Gunakan pencahayaan terang dan merata. Hindari bayangan yang berlebihan pada area tubuh ayam.</p>
+                </div>
+                <div class="info-box">
+                    <h4><i class="fas fa-expand"></i> Jarak & Fokus</h4>
+                    <p>Ambil foto dari jarak 30-50 cm. Pastikan area tubuh ayam (kepala, sayap, kaki) terlihat jelas.
+                    </p>
+                </div>
+                <div class="info-box">
+                    <h4><i class="fas fa-compress-arrows-alt"></i> Sudut Pengambilan</h4>
+                    <p>Foto dari samping atau atas untuk melihat kondisi tubuh, bulu, dan kaki secara keseluruhan.</p>
+                </div>
+                <div class="info-box">
+                    <h4><i class="fas fa-image"></i> Kualitas Gambar</h4>
+                    <p>Minimal resolusi 640x640 piksel. Hindari gambar blur atau terlalu gelap.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const imageInput = document.getElementById('imageInput');
+    const previewArea = document.getElementById('previewArea');
+    const previewImg = document.getElementById('previewImg');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+    function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    dropZone.addEventListener('drop', handleDrop, false);
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        imageInput.files = files;
+        showPreview(files[0]);
+    }
+
+    imageInput.addEventListener('change', function () {
+        if (this.files && this.files[0]) showPreview(this.files[0]);
+    });
+
+    function showPreview(file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            previewImg.src = e.target.result;
+            previewArea.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    }
+</script>
+{% endblock %}

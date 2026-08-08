@@ -1,0 +1,529 @@
+{% extends 'detection/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Hasil Diagnosis #{{ detection.id }} - CHIRA{% endblock %}
+{% block page_title %}Hasil Diagnosis{% endblock %}
+{% block page_subtitle %}Laporan analisis kesehatan ayam oleh AI CHIRA{% endblock %}
+
+{% block content %}
+<div class="detail-page fade-in">
+
+    <!-- Breadcrumb Navigation -->
+    <div class="detail-breadcrumb">
+        <a href="{% url 'detection:history' %}" class="breadcrumb-link">
+            <i class="fas fa-arrow-left"></i> Kembali ke Riwayat
+        </a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">Diagnosis #{{ detection.id }}</span>
+    </div>
+
+    <!-- Summary Banner -->
+    <div class="summary-banner {% if detection.detected_class == 'healthy' %}banner-healthy{% else %}banner-disease{% endif %}">
+        <div class="banner-icon">
+            {% if detection.detected_class == 'healthy' %}
+            <i class="fas fa-check-circle"></i>
+            {% else %}
+            <i class="fas fa-exclamation-triangle"></i>
+            {% endif %}
+        </div>
+        <div class="banner-content">
+            <h2 class="banner-title">{{ detection.disease_name_id }}</h2>
+            <p class="banner-subtitle">{{ detection.disease_name_en }}</p>
+        </div>
+        <div class="banner-stats">
+            <div class="stat-pill">
+                <span class="stat-label">Akurasi AI</span>
+                <span class="stat-value">{{ detection.confidence_percent }}%</span>
+            </div>
+            {% if detection.severity_level %}
+            <div class="stat-pill severity-pill {% if detection.severity_level == 'Berat' %}severity-high{% elif detection.severity_level == 'Sedang' %}severity-med{% else %}severity-low{% endif %}">
+                <span class="stat-label">Keparahan</span>
+                <span class="stat-value">{{ detection.severity_level }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="detail-grid">
+
+        <!-- LEFT COLUMN: Image + Metadata -->
+        <div class="detail-left">
+            <!-- Image Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-image"></i> Foto Analisis</div>
+                </div>
+                <div class="card-body img-body">
+                    {% if detection.image %}
+                    <img src="{{ detection.image.url }}" alt="Foto ayam yang dianalisis" class="detail-img">
+                    {% else %}
+                    <div class="img-placeholder">
+                        <i class="fas fa-image"></i>
+                        <p>Gambar tidak tersedia</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Metadata Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-info-circle"></i> Informasi Deteksi</div>
+                </div>
+                <div class="card-body">
+                    <table class="meta-table">
+                        <tr>
+                            <td class="meta-label">ID Deteksi</td>
+                            <td class="meta-value">#{{ detection.id }}</td>
+                        </tr>
+                        <tr>
+                            <td class="meta-label">Waktu Analisis</td>
+                            <td class="meta-value">{{ detection.timestamp|date:"d M Y, H:i" }} WIB</td>
+                        </tr>
+                        <tr>
+                            <td class="meta-label">Sumber</td>
+                            <td class="meta-value">
+                                {% if detection.detection_type == 'upload' %}Upload Manual{% elif detection.detection_type == 'camera' %}Kamera Real-time{% else %}{{ detection.detection_type }}{% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="meta-label">Akurasi AI</td>
+                            <td class="meta-value">
+                                <div class="confidence-row">
+                                    <div class="progress-track mini">
+                                        <div class="progress-fill {% if detection.confidence > 0.8 %}high{% elif detection.confidence > 0.5 %}medium{% else %}low{% endif %}"
+                                             style="width: {{ detection.confidence_percent }}%"></div>
+                                    </div>
+                                    <span>{{ detection.confidence_percent }}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="meta-label">Status</td>
+                            <td class="meta-value">
+                                {% if detection.detected_class == 'healthy' %}
+                                <span class="status-tag tag-healthy">Sehat</span>
+                                {% else %}
+                                <span class="status-tag tag-disease">Terdeteksi Penyakit</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-bar">
+                <a href="{% url 'detection:upload' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Analisis Baru
+                </a>
+                <button onclick="window.print()" class="btn btn-outline">
+                    <i class="fas fa-print"></i> Cetak Laporan
+                </button>
+                <a href="{% url 'detection:history' %}" class="btn btn-outline">
+                    <i class="fas fa-list"></i> Semua Riwayat
+                </a>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: AI Analysis Results -->
+        <div class="detail-right">
+
+            {% if detection.immediate_action %}
+            <!-- Urgent Action Card -->
+            <div class="card card-urgent">
+                <div class="card-header urgent-header">
+                    <div class="card-title"><i class="fas fa-bolt"></i> Tindakan Segera</div>
+                </div>
+                <div class="card-body">
+                    <p class="urgent-text">{{ detection.immediate_action }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if detection.causes %}
+            <!-- Causes Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-virus"></i> Penyebab</div>
+                </div>
+                <div class="card-body">
+                    <div class="analysis-text">{{ detection.causes|linebreaksbr }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if detection.symptoms %}
+            <!-- Symptoms Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-clipboard-list"></i> Gejala Klinis</div>
+                </div>
+                <div class="card-body">
+                    <div class="analysis-text">{{ detection.symptoms|linebreaksbr }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if detection.treatment %}
+            <!-- Treatment Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-medkit"></i> Penanganan</div>
+                </div>
+                <div class="card-body">
+                    <div class="analysis-text">{{ detection.treatment|linebreaksbr }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if detection.prevention %}
+            <!-- Prevention Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-shield-alt"></i> Pencegahan</div>
+                </div>
+                <div class="card-body">
+                    <div class="analysis-text">{{ detection.prevention|linebreaksbr }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<style>
+/* ===== Detail Page Layout ===== */
+.detail-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Breadcrumb */
+.detail-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.breadcrumb-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.15s;
+}
+
+.breadcrumb-link:hover { opacity: 0.75; }
+.breadcrumb-sep { color: var(--text-muted); }
+.breadcrumb-current { color: var(--text-secondary); }
+
+/* ===== Summary Banner ===== */
+.summary-banner {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem 2rem;
+    border-radius: var(--radius);
+    flex-wrap: wrap;
+}
+
+.banner-healthy {
+    background: linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(16,185,129,0.08) 100%);
+    border: 1px solid rgba(34,197,94,0.25);
+}
+
+.banner-disease {
+    background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(245,158,11,0.08) 100%);
+    border: 1px solid rgba(239,68,68,0.25);
+}
+
+.banner-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.banner-healthy .banner-icon {
+    background: rgba(34,197,94,0.15);
+    color: #16a34a;
+}
+
+.banner-disease .banner-icon {
+    background: rgba(239,68,68,0.15);
+    color: #dc2626;
+}
+
+.banner-content { flex: 1; min-width: 180px; }
+
+.banner-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.banner-subtitle {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin: 0.125rem 0 0 0;
+}
+
+.banner-stats {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.stat-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.5rem 1.25rem;
+    text-align: center;
+    min-width: 100px;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.125rem;
+    font-weight: 800;
+    color: var(--text);
+    margin-top: 0.125rem;
+}
+
+.severity-high { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.08); }
+.severity-high .stat-value { color: #dc2626; }
+.severity-med { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); }
+.severity-med .stat-value { color: #d97706; }
+.severity-low { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.08); }
+.severity-low .stat-value { color: #16a34a; }
+
+/* ===== Content Grid ===== */
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.detail-left,
+.detail-right {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Image */
+.img-body { padding: 0 !important; }
+
+.detail-img {
+    width: 100%;
+    display: block;
+    border-radius: 0 0 var(--radius) var(--radius);
+}
+
+.img-placeholder {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.img-placeholder i {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+/* Metadata Table */
+.meta-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.meta-table tr {
+    border-bottom: 1px solid var(--border);
+}
+
+.meta-table tr:last-child { border-bottom: none; }
+
+.meta-table td {
+    padding: 0.75rem 0;
+    font-size: 0.875rem;
+    vertical-align: middle;
+}
+
+.meta-label {
+    color: var(--text-secondary);
+    width: 45%;
+    font-weight: 500;
+}
+
+.meta-value {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.confidence-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.progress-track.mini {
+    flex: 1;
+    height: 6px;
+}
+
+.status-tag {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.tag-healthy {
+    background: rgba(34,197,94,0.12);
+    color: #16a34a;
+}
+
+.tag-disease {
+    background: rgba(239,68,68,0.12);
+    color: #dc2626;
+}
+
+/* Action Buttons */
+.action-bar {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.action-bar .btn { flex: 1; min-width: 120px; }
+
+/* Urgent Card */
+.card-urgent {
+    border-color: rgba(245,158,11,0.4) !important;
+}
+
+.urgent-header {
+    background: rgba(245,158,11,0.08) !important;
+}
+
+.urgent-header .card-title {
+    color: #b45309 !important;
+}
+
+.urgent-text {
+    font-weight: 500;
+    line-height: 1.75;
+    color: var(--text);
+}
+
+/* Analysis Text Content */
+.analysis-text {
+    font-size: 0.9375rem;
+    line-height: 1.85;
+    color: var(--text-secondary);
+}
+
+.analysis-text br + br {
+    display: block;
+    margin-top: 0.375rem;
+    content: "";
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1.25rem 1.5rem;
+        gap: 1rem;
+    }
+
+    .banner-stats {
+        width: 100%;
+    }
+
+    .stat-pill { flex: 1; }
+}
+
+@media (max-width: 480px) {
+    .summary-banner {
+        padding: 1rem;
+    }
+
+    .banner-title {
+        font-size: 1.25rem;
+    }
+
+    .banner-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.25rem;
+    }
+
+    .action-bar {
+        flex-direction: column;
+    }
+
+    .action-bar .btn {
+        width: 100%;
+    }
+}
+
+/* ===== Print ===== */
+@media print {
+    .sidebar, .topbar, .sidebar-overlay, .action-bar, nav, .detail-breadcrumb {
+        display: none !important;
+    }
+
+    .main {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        break-inside: avoid;
+    }
+
+    .summary-banner {
+        border: 2px solid #333 !important;
+        background: #f9f9f9 !important;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr 1.2fr;
+    }
+}
+</style>
+{% endblock %}
